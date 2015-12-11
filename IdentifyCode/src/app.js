@@ -8,9 +8,11 @@ var HelloWorldLayer = cc.Layer.extend({
 	startNode:null,
 	leveNode:null,
 	answerList:null,
+	randomLevel:null,
 	timer:30,
 	iconWidth:75,
 	currLevel:1,
+	realLevel:0,
     ctor:function () {
         this._super();
         var size = cc.winSize;
@@ -37,6 +39,7 @@ var HelloWorldLayer = cc.Layer.extend({
             y: size.height / 2
         });
 		this.addChild(this.startNode);
+		
 	},
 	timeHeart:function (dt) {
 		this.timer--;
@@ -50,43 +53,7 @@ var HelloWorldLayer = cc.Layer.extend({
 		if (type == ccui.Widget.TOUCH_ENDED){
 			if (sender.name == "startBtn") {
 				this.startNode.removeFromParent(true);
-				var size = cc.winSize;
-				this.sprite = new cc.Sprite(res.bg_png);
-				this.sprite.attr({
-					x: size.width / 2,
-					y: size.height / 2
-				});
-				this.addChild(this.sprite, 0);
-				
-				//title
-				this.titleSp = new cc.Sprite("res/ui/title.png");
-				this.titleSp.x = 200;
-				this.titleSp.y = 580;
-				this.addChild(this.titleSp);
-				
-				this.titleTxt = new cc.LabelTTF("Hello World", "Arial", 24);
-				this.titleTxt.x = this.titleSp.x + this.titleSp.width + 5;
-				this.titleTxt.y = 580;
-				this.titleTxt.anchorX = 0;
-				this.addChild(this.titleTxt);
-				this.titleTxt.setColor(cc.color(128,128,128));
-				
-				//timer
-				this.timerTxt = new cc.LabelTTF("倒计时：" + this.timer, "Arial", 24);
-				this.timerTxt.x = this.titleSp.x;
-				this.timerTxt.y = 650;
-				this.addChild(this.timerTxt);
-				
-				//下一关
-				this.nextBtn = new ccui.Button("res/ui/next.png", "res/ui/next.png");
-				this.nextBtn.addTouchEventListener(this.eventListen, this);
-				this.addChild(this.nextBtn);
-				this.nextBtn.name = "nextBtn";
-				this.nextBtn.x = 400;
-				this.nextBtn.y = 200;
-				this.answerList = new Array();
-				this.createItems(this.currLevel);
-				this.schedule(this.timeHeart,1, 30);
+				this.firstStart();
 			} else if (sender.name == "nextBtn") {
 				this.leveNode.removeFromParent(true);
 				var flag = this.checkAnswer();
@@ -105,8 +72,57 @@ var HelloWorldLayer = cc.Layer.extend({
 					this.showResult();
 					cc.log("购票失败");
 				}
+			} else if (sender.name == "shareBtn") {
+				//分享
+			} else if (sender.name == "againBtn") {
+				//再来一次
+				this.removeAllChildren();
+				this.firstStart();
 			}
 		}
+	},
+	firstStart:function () {
+		var temp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+		this.randomLevel = this.randomArray(temp);
+		this.timer = 30;
+		this.currLevel = 1;
+		var size = cc.winSize;
+		this.sprite = new cc.Sprite(res.bg_png);
+		this.sprite.attr({
+			x: size.width / 2,
+			y: size.height / 2
+		});
+		this.addChild(this.sprite, 0);
+		
+		//title
+		this.titleSp = new cc.Sprite("res/ui/title.png");
+		this.titleSp.x = 200;
+		this.titleSp.y = 580;
+		this.addChild(this.titleSp);
+		
+		this.titleTxt = new cc.LabelTTF("Hello World", "Arial", 24);
+		this.titleTxt.x = this.titleSp.x + this.titleSp.width + 5;
+		this.titleTxt.y = 580;
+		this.titleTxt.anchorX = 0;
+		this.addChild(this.titleTxt);
+		this.titleTxt.setColor(cc.color(128,128,128));
+		
+		//timer
+		this.timerTxt = new cc.LabelTTF("倒计时：" + this.timer, "Arial", 24);
+		this.timerTxt.x = this.titleSp.x;
+		this.timerTxt.y = 650;
+		this.addChild(this.timerTxt);
+		
+		//下一关
+		this.nextBtn = new ccui.Button("res/ui/next.png", "res/ui/next.png");
+		this.nextBtn.addTouchEventListener(this.eventListen, this);
+		this.addChild(this.nextBtn);
+		this.nextBtn.name = "nextBtn";
+		this.nextBtn.x = 400;
+		this.nextBtn.y = 200;
+		this.answerList = new Array();
+		this.createItems(this.currLevel);
+		this.schedule(this.timeHeart,1, 30);
 	},
 	showResult:function () {
 		this.unschedule(this.timeHeart);
@@ -150,8 +166,20 @@ var HelloWorldLayer = cc.Layer.extend({
 		
 		var shareBtn = new ccui.Button("res/ui/share.png", "res/ui/share.png");
 		var againBtn = new ccui.Button("res/ui/again.png", "res/ui/again.png");
+		shareBtn.name = "shareBtn";
+		againBtn.name = "againBtn";
+		shareBtn.addTouchEventListener(this.eventListen, this);
+		againBtn.addTouchEventListener(this.eventListen, this);
 		this.addChild(shareBtn);
 		this.addChild(againBtn);
+		shareBtn.attr({
+			x: 240,
+			y: 380
+		});
+		againBtn.attr({
+			x: 420,
+			y: 380
+		});
 	},
 	anwserListener:function (sender, type) {
 		if (type == ccui.Widget.TOUCH_ENDED){
@@ -174,7 +202,7 @@ var HelloWorldLayer = cc.Layer.extend({
 		}
 	},
 	checkAnswer:function () {
-		var arr = level.all["L_" + this.currLevel].answer;
+		var arr = level.all["L_" + this.realLevel].answer;
 		for (var i = 0; i < this.answerList.length; i++) {
 			var boo = false;
 			for (var j = 0; j < arr.length; j++) { 
@@ -200,40 +228,43 @@ var HelloWorldLayer = cc.Layer.extend({
 		return true;
 	},
 	createItems:function (le) {
-		this.titleTxt.setString(level.all["L_" + le].title);
+		var tempLv = this.randomLevel[le - 1];
+		this.realLevel = tempLv;
+		this.titleTxt.setString(level.all["L_" + tempLv].title);
 		this.leveNode = new cc.Node();
-		var arr = this.randomArray();
+		var pool = [1, 2, 3, 4, 5, 6, 7, 8];
+		var arr = this.randomArray(pool);
 
-		var sp1 = this.createItem(le, arr[0]);
+		var sp1 = this.createItem(tempLv, arr[0]);
 		this.leveNode.addChild(sp1);
 		
-		var sp2 = this.createItem(le, arr[1]);
+		var sp2 = this.createItem(tempLv, arr[1]);
 		this.leveNode.addChild(sp2);
 		sp2.x = sp1.x + this.iconWidth;
 		
-		var sp3 = this.createItem(le, arr[2]);
+		var sp3 = this.createItem(tempLv, arr[2]);
 		this.leveNode.addChild(sp3);
 		sp3.x = sp2.x + this.iconWidth;
 		
-		var sp4 = this.createItem(le, arr[3]);
+		var sp4 = this.createItem(tempLv, arr[3]);
 		this.leveNode.addChild(sp4);
 		sp4.x = sp3.x + this.iconWidth;
 		
-		var sp5 = this.createItem(le, arr[4]);
+		var sp5 = this.createItem(tempLv, arr[4]);
 		this.leveNode.addChild(sp5);
 		sp5.y = sp1.y - this.iconWidth;
 		
-		var sp6 = this.createItem(le, arr[5]);
+		var sp6 = this.createItem(tempLv, arr[5]);
 		this.leveNode.addChild(sp6);
 		sp6.x = sp5.x + this.iconWidth;
 		sp6.y = sp5.y;
 		
-		var sp7 = this.createItem(le, arr[6]);
+		var sp7 = this.createItem(tempLv, arr[6]);
 		this.leveNode.addChild(sp7);
 		sp7.x = sp6.x + this.iconWidth;
 		sp7.y = sp5.y;
 		
-		var sp8 = this.createItem(le, arr[7]);
+		var sp8 = this.createItem(tempLv, arr[7]);
 		this.leveNode.addChild(sp8);
 		sp8.x = sp7.x + this.iconWidth;
 		sp8.y = sp5.y;
@@ -251,8 +282,7 @@ var HelloWorldLayer = cc.Layer.extend({
 		sp.addTouchEventListener(this.anwserListener, this);
 		return sp;
 	},
-	randomArray:function () {
-		var pool = [1, 2, 3, 4, 5, 6, 7, 8];
+	randomArray:function (pool) {
 		var arr2 = new Array();  
 		var count = pool.length;  
 		var cbRandCount = 0;// 索引  
